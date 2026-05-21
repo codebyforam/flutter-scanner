@@ -1,0 +1,4 @@
+enum ScanType {
+  card,
+  passbook,
+}
