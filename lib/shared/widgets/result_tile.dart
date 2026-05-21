@@ -27,8 +27,6 @@ class ResultTile extends StatefulWidget {
   final String value;
   final IconData icon;
   final ValidationResult Function(String)? validator;
-  final bool isValid;
-  final String? warning;
 
   const ResultTile({
     super.key,
@@ -36,8 +34,6 @@ class ResultTile extends StatefulWidget {
     required this.value,
     required this.icon,
     this.validator,
-    this.isValid = true,
-    this.warning,
   });
 
   @override
@@ -74,24 +70,14 @@ class _ResultTileState extends State<ResultTile> {
     if (widget.validator != null) {
       _validationResult = widget.validator!(val);
     } else {
-      // Legacy compatibility mode
-      if (!widget.isValid) {
-        _validationResult = const ValidationResult.invalid('Invalid parsed value');
-      } else if (widget.warning != null) {
-        _validationResult = ValidationResult.warning(widget.warning!);
-      } else {
-        _validationResult = const ValidationResult.valid();
-      }
+      _validationResult = const ValidationResult.valid();
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final errorColor = theme.colorScheme.error;
-    final warningColor = theme.colorScheme.onTertiaryContainer;
-    final warningBgColor = theme.colorScheme.tertiaryContainer;
-
+    
     final status = _validationResult.status;
     final message = _validationResult.message;
 
@@ -99,88 +85,145 @@ class _ResultTileState extends State<ResultTile> {
     final isWarning = status == ValidationStatus.warning;
     final isValid = status == ValidationStatus.valid;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+    final statusColor = isError 
+        ? theme.colorScheme.error 
+        : (isWarning ? theme.colorScheme.tertiary : theme.colorScheme.secondary);
+
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isError ? theme.colorScheme.error.withValues(alpha: 0.5) : const Color(0xFFF1F5F9),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          TextFormField(
-            controller: _controller,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: isError ? errorColor : null,
-              letterSpacing: 1.2,
-            ),
-            onChanged: (val) {
-              setState(() {
-                _validate(val);
-              });
-            },
-            decoration: InputDecoration(
-              labelText: widget.label,
-              prefixIcon: Icon(
-                widget.icon,
-                color: isError ? errorColor : (isWarning ? warningColor : theme.colorScheme.primary),
-              ),
-              filled: true,
-              fillColor: isError ? errorColor.withValues(alpha: 0.05) : (isWarning ? warningBgColor : theme.colorScheme.surfaceContainerHigh),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide.none,
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide(
-                  color: isError ? errorColor.withValues(alpha: 0.5) : (isWarning ? warningColor.withValues(alpha: 0.3) : Colors.transparent),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Icon(widget.icon, size: 16, color: theme.colorScheme.primary),
+                    const SizedBox(width: 8),
+                    Text(
+                      widget.label.toUpperCase(),
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        fontSize: 11,
+                        color: theme.colorScheme.onSurfaceVariant,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide(
-                  color: isError ? errorColor : (isWarning ? warningColor : theme.colorScheme.primary),
-                  width: 2,
-                ),
-              ),
-              suffixIcon: isValid ? const Icon(Icons.check_circle, color: Colors.green) : const Icon(Icons.edit_outlined, size: 20),
+                _StatusBadge(status: status, color: statusColor),
+              ],
             ),
           ),
-          if (message != null && isError) ...[
-            const SizedBox(height: 6),
-            Row(
-              children: [
-                Icon(Icons.error_outline_rounded, size: 16, color: errorColor),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    message,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: errorColor,
-                      fontWeight: FontWeight.w500,
+          TextField(
+            controller: _controller,
+            onChanged: (val) => setState(() => _validate(val)),
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontSize: 22,
+              letterSpacing: 2,
+              fontFamily: 'monospace', // Use monospace for numbers
+            ),
+            decoration: const InputDecoration(
+              filled: false,
+              contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
+            ),
+          ),
+          if (message != null)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              decoration: BoxDecoration(
+                color: statusColor.withValues(alpha: 0.05),
+                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    isError ? Icons.error_outline_rounded : Icons.info_outline_rounded,
+                    size: 14,
+                    color: statusColor,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      message,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: statusColor,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ] else if (message != null && isWarning) ...[
-            const SizedBox(height: 6),
-            Row(
-              children: [
-                Icon(Icons.security_update_warning_outlined, size: 16, color: warningColor),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    message,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: warningColor,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
         ],
       ),
     );
   }
 }
+
+class _StatusBadge extends StatelessWidget {
+  final ValidationStatus status;
+  final Color color;
+
+  const _StatusBadge({required this.status, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    String text = 'VALID';
+    IconData icon = Icons.check_circle_rounded;
+    
+    if (status == ValidationStatus.invalid) {
+      text = 'INVALID';
+      icon = Icons.cancel_rounded;
+    } else if (status == ValidationStatus.warning) {
+      text = 'CHECK';
+      icon = Icons.error_rounded;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: color),
+          const SizedBox(width: 4),
+          Text(
+            text,
+            style: TextStyle(
+              color: color,
+              fontSize: 10,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+

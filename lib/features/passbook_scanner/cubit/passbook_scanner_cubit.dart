@@ -29,13 +29,11 @@ class PassbookScannerCubit extends Cubit<PassbookScannerState> {
   int? _lastScanHash;
 
   Future<void> scanPassbookFromCamera() async {
-    emit(const PassbookScannerLoading());
     final imgResult = await _imageService.pickImageFromCamera();
     await _processImageResult(imgResult);
   }
 
   Future<void> scanPassbookFromGallery() async {
-    emit(const PassbookScannerLoading());
     final imgResult = await _imageService.pickImageFromGallery();
     await _processImageResult(imgResult);
   }
@@ -44,12 +42,21 @@ class PassbookScannerCubit extends Cubit<PassbookScannerState> {
     switch (imgResult) {
       case Success(:final data):
         _scannedImageFile = data;
+        emit(const PassbookScannerLoading());
+
+        // Add artificial delay to make the analysis stage feel premium and deliberate
+        await Future<void>.delayed(const Duration(milliseconds: 1500));
+
         final ocrResult = await _ocrService.extractText(data);
         _processOcrResult(ocrResult);
       case PartialSuccess(:final partialMessage):
         emit(PassbookScannerFailure('Image processing warning: $partialMessage'));
       case Failure(:final message):
-        emit(PassbookScannerFailure(message));
+        if (message.contains('No image')) {
+          emit(const PassbookScannerInitial());
+        } else {
+          emit(PassbookScannerFailure(message));
+        }
     }
   }
 

@@ -9,6 +9,6 @@ void main() async {
   AppLogger.i('Initializing Dependency Injection...');
   await initInjection();
 
-  AppLogger.i('Starting OCR Scanner Application...');
-  runApp(const OcrScannerApp());
+  AppLogger.i('Starting Flutter Scanner Application...');
+  runApp(const FlutterScannerApp());
 }

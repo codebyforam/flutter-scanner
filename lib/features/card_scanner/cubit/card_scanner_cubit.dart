@@ -29,13 +29,11 @@ class CardScannerCubit extends Cubit<CardScannerState> {
   int? _lastScanHash;
 
   Future<void> scanCardFromCamera() async {
-    emit(const CardScannerLoading());
     final imgResult = await _imageService.pickImageFromCamera();
     await _processImageResult(imgResult);
   }
 
   Future<void> scanCardFromGallery() async {
-    emit(const CardScannerLoading());
     final imgResult = await _imageService.pickImageFromGallery();
     await _processImageResult(imgResult);
   }
@@ -44,12 +42,22 @@ class CardScannerCubit extends Cubit<CardScannerState> {
     switch (imgResult) {
       case Success(:final data):
         _scannedImageFile = data;
+        emit(const CardScannerLoading());
+        
+        // Add artificial delay to make the analysis stage feel premium and deliberate
+        await Future<void>.delayed(const Duration(milliseconds: 1500));
+
         final ocrResult = await _ocrService.extractText(data);
         _processOcrResult(ocrResult);
       case PartialSuccess(:final partialMessage):
         emit(CardScannerFailure('Image processing warning: $partialMessage'));
       case Failure(:final message):
-        emit(CardScannerFailure(message));
+        // If user canceled (common case for 'No image...'), return to initial instead of error
+        if (message.contains('No image')) {
+          emit(const CardScannerInitial());
+        } else {
+          emit(CardScannerFailure(message));
+        }
     }
   }
 

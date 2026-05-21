@@ -3,7 +3,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
-class ScanImagePreview extends StatelessWidget {
+class ScanImagePreview extends StatefulWidget {
   final File? imageFile;
   final VoidCallback? onClear;
   final bool isLoading;
@@ -16,218 +16,303 @@ class ScanImagePreview extends StatelessWidget {
   });
 
   @override
+  State<ScanImagePreview> createState() => _ScanImagePreviewState();
+}
+
+class _ScanImagePreviewState extends State<ScanImagePreview> with SingleTickerProviderStateMixin {
+  late AnimationController _scanController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scanController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    );
+    if (widget.isLoading) {
+      _scanController.repeat(reverse: true);
+    }
+  }
+
+  @override
+  void didUpdateWidget(ScanImagePreview oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isLoading && !oldWidget.isLoading) {
+      _scanController.repeat(reverse: true);
+    } else if (!widget.isLoading && oldWidget.isLoading) {
+      _scanController.stop();
+    }
+  }
+
+  @override
+  void dispose() {
+    _scanController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final primaryColor = theme.colorScheme.primary;
-    final onSurfaceVariant = theme.colorScheme.onSurfaceVariant;
 
-    if (imageFile == null) {
-      return AspectRatio(
-        aspectRatio: 1.58,
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                theme.colorScheme.surfaceContainerLow,
-                theme.colorScheme.surfaceContainerHigh,
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 30,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(28),
+        child: AspectRatio(
+          aspectRatio: 1.58,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              if (widget.imageFile == null)
+                _buildPlaceholder(theme, primaryColor)
+              else
+                _buildImage(theme),
+              if (widget.isLoading) _buildScanningOverlay(primaryColor),
+              if (widget.imageFile != null && widget.onClear != null && !widget.isLoading)
+                Positioned(
+                  top: 16,
+                  right: 16,
+                  child: _BlurButton(
+                    onPressed: widget.onClear!,
+                    icon: Icons.close_rounded,
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPlaceholder(ThemeData theme, Color primaryColor) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            theme.colorScheme.surfaceContainerHigh,
+            theme.colorScheme.surfaceContainerLow,
+          ],
+        ),
+      ),
+      child: Stack(
+        children: [
+          _buildCorners(primaryColor),
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: primaryColor.withValues(alpha: 0.1),
+                        blurRadius: 20,
+                        spreadRadius: 5,
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    Icons.camera_rounded,
+                    size: 32,
+                    color: primaryColor,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Ready to Scan',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Place card inside the frame',
+                  style: theme.textTheme.bodySmall,
+                ),
               ],
             ),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
-            ),
           ),
-          child: Stack(
-            children: [
-              // Reticles / Corners
-              // Top-Left
-              Positioned(
-                top: 16,
-                left: 16,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildImage(ThemeData theme) {
+    return Container(
+      decoration: BoxDecoration(
+        image: DecorationImage(
+          image: FileImage(widget.imageFile!),
+          fit: BoxFit.cover,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildScanningOverlay(Color primaryColor) {
+    return AnimatedBuilder(
+      animation: _scanController,
+      builder: (context, child) {
+        return Stack(
+          children: [
+            ClipRRect(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 2, sigmaY: 2),
                 child: Container(
-                  width: 20,
-                  height: 3,
-                  decoration: BoxDecoration(
-                    color: primaryColor,
-                    borderRadius: BorderRadius.circular(1.5),
+                  color: Colors.black.withValues(alpha: 0.1),
+                ),
+              ),
+            ),
+            Positioned(
+              top: _scanController.value * (MediaQuery.of(context).size.width / 1.58),
+              left: 0,
+              right: 0,
+              child: Container(
+                height: 2,
+                decoration: BoxDecoration(
+                  boxShadow: [
+                    BoxShadow(
+                      color: primaryColor.withValues(alpha: 0.8),
+                      blurRadius: 15,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                  gradient: LinearGradient(
+                    colors: [
+                      primaryColor.withValues(alpha: 0),
+                      primaryColor,
+                      primaryColor.withValues(alpha: 0),
+                    ],
                   ),
                 ),
               ),
-              Positioned(
-                top: 16,
-                left: 16,
-                child: Container(
-                  width: 3,
-                  height: 20,
-                  decoration: BoxDecoration(
-                    color: primaryColor,
-                    borderRadius: BorderRadius.circular(1.5),
-                  ),
+            ),
+            Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.7),
+                  borderRadius: BorderRadius.circular(30),
                 ),
-              ),
-              // Top-Right
-              Positioned(
-                top: 16,
-                right: 16,
-                child: Container(
-                  width: 20,
-                  height: 3,
-                  decoration: BoxDecoration(
-                    color: primaryColor,
-                    borderRadius: BorderRadius.circular(1.5),
-                  ),
-                ),
-              ),
-              Positioned(
-                top: 16,
-                right: 16,
-                child: Container(
-                  width: 3,
-                  height: 20,
-                  decoration: BoxDecoration(
-                    color: primaryColor,
-                    borderRadius: BorderRadius.circular(1.5),
-                  ),
-                ),
-              ),
-              // Bottom-Left
-              Positioned(
-                bottom: 16,
-                left: 16,
-                child: Container(
-                  width: 20,
-                  height: 3,
-                  decoration: BoxDecoration(
-                    color: primaryColor,
-                    borderRadius: BorderRadius.circular(1.5),
-                  ),
-                ),
-              ),
-              Positioned(
-                bottom: 16,
-                left: 16,
-                child: Container(
-                  width: 3,
-                  height: 20,
-                  decoration: BoxDecoration(
-                    color: primaryColor,
-                    borderRadius: BorderRadius.circular(1.5),
-                  ),
-                ),
-              ),
-              // Bottom-Right
-              Positioned(
-                bottom: 16,
-                right: 16,
-                child: Container(
-                  width: 20,
-                  height: 3,
-                  decoration: BoxDecoration(
-                    color: primaryColor,
-                    borderRadius: BorderRadius.circular(1.5),
-                  ),
-                ),
-              ),
-              Positioned(
-                bottom: 16,
-                right: 16,
-                child: Container(
-                  width: 3,
-                  height: 20,
-                  decoration: BoxDecoration(
-                    color: primaryColor,
-                    borderRadius: BorderRadius.circular(1.5),
-                  ),
-                ),
-              ),
-              // Content
-              Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: primaryColor.withValues(alpha: 0.08),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.document_scanner_outlined,
-                        size: 36,
-                        color: primaryColor,
+                    const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(width: 12),
                     Text(
-                      'Scan Area Viewfinder',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: theme.colorScheme.onSurface,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Position the document within the framing guides',
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: onSurfaceVariant,
+                      'ANALYZING CARD...',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.2,
                       ),
                     ),
                   ],
                 ),
               ),
-            ],
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildCorners(Color color) {
+    return Stack(
+      children: [
+        Positioned(
+          top: 24,
+          left: 24,
+          child: _Corner(angle: 0, color: color),
+        ),
+        Positioned(
+          top: 24,
+          right: 24,
+          child: _Corner(angle: 1.5708, color: color),
+        ),
+        Positioned(
+          bottom: 24,
+          left: 24,
+          child: _Corner(angle: 4.71239, color: color),
+        ),
+        Positioned(
+          bottom: 24,
+          right: 24,
+          child: _Corner(angle: 3.14159, color: color),
+        ),
+      ],
+    );
+  }
+}
+
+class _Corner extends StatelessWidget {
+  final double angle;
+  final Color color;
+
+  const _Corner({required this.angle, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Transform.rotate(
+      angle: angle,
+      child: Container(
+        width: 30,
+        height: 30,
+        decoration: BoxDecoration(
+          border: Border(
+            top: BorderSide(color: color, width: 4),
+            left: BorderSide(color: color, width: 4),
           ),
         ),
-      );
-    }
-
-    return AspectRatio(
-      aspectRatio: 1.58,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: theme.colorScheme.outlineVariant,
-              ),
-              image: DecorationImage(
-                image: FileImage(imageFile!),
-                fit: BoxFit.contain,
-              ),
-            ),
-          ),
-          if (isLoading)
-            ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
-                child: ColoredBox(
-                  color: Colors.black.withValues(alpha: 0.25),
-                  child: const Center(
-                    child: CircularProgressIndicator(color: Colors.white),
-                  ),
-                ),
-              ),
-            ),
-          if (onClear != null && !isLoading)
-            Positioned(
-              top: 8,
-              right: 8,
-              child: CircleAvatar(
-                backgroundColor: Colors.black.withValues(alpha: 0.6),
-                child: IconButton(
-                  icon: const Icon(Icons.close, color: Colors.white),
-                  onPressed: onClear,
-                ),
-              ),
-            ),
-        ],
       ),
     );
   }
 }
+
+class _BlurButton extends StatelessWidget {
+  final VoidCallback onPressed;
+  final IconData icon;
+
+  const _BlurButton({required this.onPressed, required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: GestureDetector(
+          onTap: onPressed,
+          child: Container(
+            padding: const EdgeInsets.all(8),
+            color: Colors.black.withValues(alpha: 0.3),
+            child: Icon(icon, color: Colors.white, size: 20),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
