@@ -61,6 +61,20 @@ class CardScannerPage extends StatelessWidget {
     return const ValidationResult.valid();
   }
 
+  static ValidationResult _validateCardHolderName(String value) {
+    final clean = value.trim();
+    if (clean.isEmpty) {
+      return const ValidationResult.warning('Card holder name is empty');
+    }
+    if (RegExp(r'\d').hasMatch(clean)) {
+      return const ValidationResult.invalid('Name should not contain digits');
+    }
+    if (clean.length < 3) {
+      return const ValidationResult.warning('Name is too short');
+    }
+    return const ValidationResult.valid();
+  }
+
   static ValidationResult _validateExpiryDate(String value) {
     final clean = value.trim();
     if (clean.isEmpty) {
@@ -310,6 +324,9 @@ class CardScannerPage extends StatelessWidget {
           ? (state as CardScannerSuccess).data 
           : (state as CardScannerPartialSuccess).data;
       final isPartial = state is CardScannerPartialSuccess;
+      final isDuplicate = state is CardScannerSuccess 
+          ? (state as CardScannerSuccess).isDuplicate 
+          : (state as CardScannerPartialSuccess).isDuplicate;
       
       return SingleChildScrollView(
         child: Column(
@@ -319,10 +336,17 @@ class CardScannerPage extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('Scan Result', style: theme.textTheme.titleMedium),
-                if (!isPartial)
-                  const _ConfidenceBadge()
-                else
-                  _WarningBadge(theme: theme),
+                Row(
+                  children: [
+                    if (isDuplicate)
+                      const _DuplicateBadge(),
+                    const SizedBox(width: 8),
+                    if (!isPartial)
+                      const _ConfidenceBadge()
+                    else
+                      _WarningBadge(theme: theme),
+                  ],
+                ),
               ],
             ),
             const SizedBox(height: 20),
@@ -331,12 +355,19 @@ class CardScannerPage extends StatelessWidget {
               value: data.cardNumber,
               icon: Icons.credit_card_rounded,
               validator: _validateCardNumber,
+              isSensitive: true,
             ),
             ResultTile(
               label: 'Expiry Date',
               value: data.expiryDate,
               icon: Icons.calendar_today_rounded,
               validator: _validateExpiryDate,
+            ),
+            ResultTile(
+              label: 'Card Holder',
+              value: data.cardHolderName,
+              icon: Icons.person_rounded,
+              validator: _validateCardHolderName,
             ),
             const SizedBox(height: 20),
           ],
@@ -384,6 +415,31 @@ class _ConfidenceBadge extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _DuplicateBadge extends StatelessWidget {
+  const _DuplicateBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.outline.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        'DUPLICATE',
+        style: TextStyle(
+          color: theme.colorScheme.outline,
+          fontSize: 10,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 0.5,
+        ),
       ),
     );
   }

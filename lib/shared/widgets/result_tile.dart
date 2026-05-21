@@ -27,6 +27,7 @@ class ResultTile extends StatefulWidget {
   final String value;
   final IconData icon;
   final ValidationResult Function(String)? validator;
+  final bool isSensitive;
 
   const ResultTile({
     super.key,
@@ -34,6 +35,7 @@ class ResultTile extends StatefulWidget {
     required this.value,
     required this.icon,
     this.validator,
+    this.isSensitive = false,
   });
 
   @override
@@ -43,12 +45,14 @@ class ResultTile extends StatefulWidget {
 class _ResultTileState extends State<ResultTile> {
   late TextEditingController _controller;
   late ValidationResult _validationResult;
+  bool _obscureText = false;
 
   @override
   void initState() {
     super.initState();
     _controller = TextEditingController(text: widget.value);
     _validate(widget.value);
+    _obscureText = widget.isSensitive;
   }
 
   @override
@@ -58,6 +62,14 @@ class _ResultTileState extends State<ResultTile> {
       _controller.text = widget.value;
       _validate(widget.value);
     }
+  }
+
+  String _getMaskedValue(String value) {
+    if (value.length <= 4) return value;
+    final lastFour = value.substring(value.length - 4);
+    final prefix = value.substring(0, value.length - 4);
+    final masked = prefix.replaceAll(RegExp(r'\d'), 'X');
+    return masked + lastFour;
   }
 
   @override
@@ -135,17 +147,29 @@ class _ResultTileState extends State<ResultTile> {
           TextField(
             controller: _controller,
             onChanged: (val) => setState(() => _validate(val)),
+            obscureText: _obscureText,
+            obscuringCharacter: 'X',
             style: theme.textTheme.titleLarge?.copyWith(
               fontSize: 22,
               letterSpacing: 2,
               fontFamily: 'monospace', // Use monospace for numbers
             ),
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               filled: false,
-              contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               border: InputBorder.none,
               enabledBorder: InputBorder.none,
               focusedBorder: InputBorder.none,
+              suffixIcon: widget.isSensitive
+                  ? IconButton(
+                      icon: Icon(
+                        _obscureText ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                        color: theme.colorScheme.onSurfaceVariant,
+                        size: 20,
+                      ),
+                      onPressed: () => setState(() => _obscureText = !_obscureText),
+                    )
+                  : null,
             ),
           ),
           if (message != null)

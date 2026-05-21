@@ -69,19 +69,59 @@ class PassbookParser {
       foundAccountNo = bestAccountNo;
     }
 
-    if (foundAccountNo == null && foundIfscCode == null) {
+    // 3. Search for Account Holder Name
+    String? foundAccountHolderName;
+    final nameKeywords = ['NAME', 'ACCOUNT HOLDER', 'CUSTOMER NAME', 'HOLDER NAME', 'NAME OF'];
+    
+    for (var i = 0; i < lines.length; i++) {
+      final upperLine = lines[i].toUpperCase();
+      
+      for (final kw in nameKeywords) {
+        if (upperLine.contains(kw)) {
+          // Try to extract from the same line after the keyword
+          var remaining = lines[i].substring(upperLine.indexOf(kw) + kw.length).trim();
+          // Remove common separators
+          remaining = remaining.replaceFirst(RegExp(r'^[:\-\s]+'), '').trim();
+          
+          if (remaining.isNotEmpty && remaining.split(' ').length >= 2) {
+             // Basic check: should be mostly alphabetic
+             if (RegExp(r'^[A-Z\s\.]+$', caseSensitive: false).hasMatch(remaining)) {
+               foundAccountHolderName = remaining.toUpperCase();
+               break;
+             }
+          }
+          
+          // If not found on same line, look at the next line
+          if (i + 1 < lines.length) {
+            final nextLine = lines[i+1].trim();
+            if (nextLine.isNotEmpty && nextLine.split(' ').length >= 2) {
+              if (RegExp(r'^[A-Z\s\.]+$', caseSensitive: false).hasMatch(nextLine)) {
+                foundAccountHolderName = nextLine.toUpperCase();
+                break;
+              }
+            }
+          }
+        }
+      }
+      if (foundAccountHolderName != null) break;
+    }
+
+    if (foundAccountNo == null && foundIfscCode == null && foundAccountHolderName == null) {
       return const Failure('Could not identify any bank details in OCR text');
     }
 
     if (foundAccountNo == null) {
-      warningMessage = 'Account number could not be found (or confidence too low)';
+      warningMessage = 'Account number could not be found';
     } else if (foundIfscCode == null) {
       warningMessage = 'IFSC code could not be found';
+    } else if (foundAccountHolderName == null) {
+      warningMessage = 'Account holder name could not be found';
     }
 
     final details = BankDetails(
       accountNo: foundAccountNo ?? '',
       ifscCode: foundIfscCode ?? '',
+      accountHolderName: foundAccountHolderName ?? '',
       warning: warningMessage,
     );
 

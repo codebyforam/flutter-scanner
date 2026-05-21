@@ -9,21 +9,49 @@ A production-grade OCR application designed for the Fintech sector. This project
 
 ---
 
-## 🚀 Key Features
+## 🚀 Features & Assignment Requirements
 
-### 💳 Smart Card Scanner
-- **Heuristic Scoring Engine**: Contextual detection of expiry dates (proximity to 'Valid Thru', 'Exp', etc.).
-- **Luhn Validation**: Manual implementation of the Luhn algorithm for card checksum verification.
-- **Normalization**: Automatic correction of common OCR misreads (e.g., `O` to `0`, `I` to `1`).
-- **Real-time Feedback**: Interactive UI for immediate field correction and validation.
+### 1. Card Scanner
+- **Details Extracted**: Card Number, Expiry Date, Card Holder Name.
+- **Privacy**: Automated **masking** of the card number (e.g., `XXXX XXXX XXXX 1234`) with a toggle to view.
+- **Algorithm**: `CardParser` manually processes noisy OCR text using a scoring system.
+- **Luhn Validation**: Manual implementation of the **Luhn Algorithm** (`LuhnValidator`) to verify card authenticity.
 
-### 🏦 Passbook Scanner
-- **IFSC Extraction**: Specialized logic for Indian Financial System Codes with auto-standardization of the 5th character.
-- **Account Number Scoring**: Keywords-based confidence scoring to differentiate account numbers from transaction amounts.
+### 2. Passbook Scanner
+- **Details Extracted**: Account Holder Name, Account Number, IFSC Code.
+- **Algorithm**: `PassbookParser` uses keyword proximity and heuristic scoring to identify account details amidst transaction history and noisy text.
+- **Normalization**: Standardizes Indian IFSC codes (ensuring the 5th character is always `0`).
 
-### 🛡️ Secure & Private
-- **100% On-Device**: Zero data leaves the device. Uses Google ML Kit for local processing.
-- **Privacy First**: Designed for fintech compliance with clear "Trust Indicators" in the UI.
+---
+
+## 🛠 Manual Parsing Algorithms
+
+As per assignment constraints, **no external libraries** were used for parsing the extracted OCR text.
+
+### Card Parsing Logic
+1. **Candidate Identification**: Scans text for 13-19 digit sequences.
+2. **Prioritization**: Ranks candidates based on Luhn validity and standard card lengths.
+3. **Expiry Detection**: Searches for `MM/YY` or `MM/YYYY` patterns. Scores them higher if near keywords like "Valid Thru" or "Expiry" and lower if near "DOB".
+4. **Name Extraction**: Identifies 2-3 word uppercase strings excluding card brand names and banking keywords.
+
+### Passbook Parsing Logic
+1. **IFSC Detection**: Regex-based pattern matching for standard 11-digit IFSC codes.
+2. **Account Number Extraction**: Identifies numeric sequences of 9-18 digits. Uses a scoring system where proximity to "A/C" or "Account" increases confidence, while proximity to "Balance" or "Amount" decreases it.
+3. **Name Extraction**: Looks for name-related keywords and extracts the following alphabetic string.
+
+---
+
+## 📝 Assumptions & Constraints
+
+- **Language**: Optimized for English-language documents.
+- **IFSC Format**: Assumes the standard 11-character Indian IFSC format.
+- **Card Holder Name**: Extracted if printed in standard uppercase format on the card front.
+- **Image Quality**: Assumes reasonable lighting and focus for on-device OCR accuracy.
+
+### What was skipped / Trade-offs
+- **Bank Logo Recognition**: While branding helps scoring, a full logo-to-bank mapping was skipped to focus on text-based parsing.
+- **Non-Standard Expiry**: Very rare formats (e.g., text-based "Dec 2025") were deprioritized over numeric formats.
+- **Offline ML Models**: Used Google ML Kit which is on-device but requires initial library download; fully air-gapped custom Tesseract models were skipped for better performance/size ratio.
 
 ---
 

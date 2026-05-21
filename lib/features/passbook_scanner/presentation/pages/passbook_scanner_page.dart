@@ -51,6 +51,20 @@ class PassbookScannerPage extends StatelessWidget {
     return const ValidationResult.valid();
   }
 
+  static ValidationResult _validateAccountHolderName(String value) {
+    final clean = value.trim();
+    if (clean.isEmpty) {
+      return const ValidationResult.warning('Account holder name is empty');
+    }
+    if (RegExp(r'\d').hasMatch(clean)) {
+      return const ValidationResult.invalid('Name should not contain digits');
+    }
+    if (clean.length < 3) {
+      return const ValidationResult.warning('Name is too short');
+    }
+    return const ValidationResult.valid();
+  }
+
   static ValidationResult _validateIfscCode(String value) {
     var clean = value.trim().toUpperCase().replaceAll(RegExp(r'\s+|-'), '');
 
@@ -258,7 +272,7 @@ class PassbookScannerPage extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'The scanner will automatically extract\nthe account number and IFSC code.',
+            'The scanner will automatically extract\naccount holder name, number and IFSC.',
             textAlign: TextAlign.center,
             style: theme.textTheme.bodyMedium,
           ),
@@ -280,6 +294,9 @@ class PassbookScannerPage extends StatelessWidget {
           ? (state as PassbookScannerSuccess).data 
           : (state as PassbookScannerPartialSuccess).data;
       final isPartial = state is PassbookScannerPartialSuccess;
+      final isDuplicate = state is PassbookScannerSuccess 
+          ? (state as PassbookScannerSuccess).isDuplicate 
+          : (state as PassbookScannerPartialSuccess).isDuplicate;
       
       return SingleChildScrollView(
         child: Column(
@@ -289,13 +306,26 @@ class PassbookScannerPage extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('Scan Result', style: theme.textTheme.titleMedium),
-                if (!isPartial)
-                  const _ConfidenceBadge()
-                else
-                  _WarningBadge(theme: theme),
+                Row(
+                  children: [
+                    if (isDuplicate)
+                      const _DuplicateBadge(),
+                    const SizedBox(width: 8),
+                    if (!isPartial)
+                      const _ConfidenceBadge()
+                    else
+                      _WarningBadge(theme: theme),
+                  ],
+                ),
               ],
             ),
             const SizedBox(height: 20),
+            ResultTile(
+              label: 'Account Holder',
+              value: data.accountHolderName,
+              icon: Icons.person_rounded,
+              validator: _validateAccountHolderName,
+            ),
             ResultTile(
               label: 'Account Number',
               value: data.accountNo,
@@ -354,6 +384,31 @@ class _ConfidenceBadge extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _DuplicateBadge extends StatelessWidget {
+  const _DuplicateBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.outline.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        'DUPLICATE',
+        style: TextStyle(
+          color: theme.colorScheme.outline,
+          fontSize: 10,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 0.5,
+        ),
       ),
     );
   }

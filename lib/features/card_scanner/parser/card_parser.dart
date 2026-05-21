@@ -1,4 +1,5 @@
 import 'package:flutter_ocr/core/errors/result.dart';
+import 'package:flutter_ocr/core/logger/app_logger.dart';
 import 'package:flutter_ocr/core/utils/luhn_validator.dart';
 import 'package:flutter_ocr/core/utils/regex_patterns.dart';
 import 'package:flutter_ocr/core/utils/text_cleaner.dart';
@@ -238,7 +239,84 @@ class CardParser {
 
     final foundExpiryDate = bestExpiry?.normalizedText;
 
-    // 5. Calculate Document Confidence Score
+    // 5. Try to find card holder name
+    String? foundCardHolderName;
+    final cardHolderKeywords = [
+      'VISA', 'MASTERCARD', 'MASTER CARD', 'RUPAY', 'DEBIT', 'CREDIT', 
+      'VALID', 'THRU', 'EXP', 'EXPIRY', 'EXPIRES', 'MONTH', 'YEAR',
+      'BANK', 'INTERNATIONAL', 'PLATINUM', 'GOLD', 'CLASSIC', 'CARDHOLDER',
+      'CARD HOLDER', 'AUTHORIZED', 'SIGNATURE', 'MEMBER', 'AMERICAN EXPRESS', 'AMEX',
+      'DISCOVER', 'DINERS CLUB', 'JCB', 'MAESTRO', 'ELECTRON', 'WORLD', 'BUSINESS'
+    ];
+
+    for (final line in lines) {
+      var candidate = line.trim();
+      if (candidate.isEmpty) continue;
+
+      final upperCandidate = candidate.toUpperCase();
+
+      // Check for common labels and strip them
+      final prefixes = ['CARD HOLDER', 'NAME', 'CARDHOLDER', 'NAME OF HOLDER'];
+      bool hadPrefix = false;
+      for (final p in prefixes) {
+        if (upperCandidate.startsWith(p)) {
+          candidate = candidate.substring(p.length).replaceFirst(RegExp(r'^[:\-\s]+'), '').trim();
+          hadPrefix = true;
+          break;
+        }
+      }
+
+      if (candidate.isEmpty) continue;
+
+      // Look for lines with 2-5 words
+      final words = candidate.split(RegExp(r'\s+'));
+      if (words.length >= 2 && words.length <= 5) {
+        var cleanedCandidate = candidate.toUpperCase()
+            .replaceAll('1', 'I')
+            .replaceAll('0', 'O')
+            .replaceAll('5', 'S')
+            .replaceAll('8', 'B')
+            .replaceAll('2', 'Z');
+
+        if (RegExp(r'^[A-Z\s.-]+$').hasMatch(cleanedCandidate)) {
+          bool isForbidden = false;
+          final forbiddenKeywords = [
+            'DEBIT', 'CREDIT', 'CARD', 'INTERNATIONAL', 'PLATINUM', 
+            'GOLD', 'CLASSIC', 'BANK', 'VALID', 'THRU', 'UPTO', 'FROM',
+            'ELECTRON', 'MAESTRO', 'RUPAY', 'VISA', 'MASTERCARD', 'WORLD',
+            'PREPAID', 'SIGNATURE', 'BUSINESS', 'MEMBER', 'AUTHORIZED',
+            'CUSTOMER', 'INDIA', 'STATE', 'CENTRAL', 'HDFC', 'ICICI', 'AXIS'
+          ];
+          
+          final upperCandidate = cleanedCandidate.toUpperCase();
+          for (final kw in forbiddenKeywords) {
+            if (upperCandidate.contains(kw)) {
+              isForbidden = true;
+              break;
+            }
+          }
+          
+          if (isForbidden) {
+            AppLogger.d('Skipping name candidate (forbidden keyword): $cleanedCandidate');
+            continue;
+          }
+          
+          if (!hadPrefix) {
+            if (cleanedCandidate.length < 3) continue;
+            // Names usually don't have very long single words (unless it's a very long surname)
+            // But they definitely don't have words like 'INTERNATIONAL' which is 13 chars.
+            if (words.any((w) => w.length > 15)) continue;
+            if (words.any((w) => w.length < 2 && !w.contains('.'))) continue;
+          }
+
+          AppLogger.d('Found name candidate: $cleanedCandidate (Prefix: $hadPrefix)');
+          foundCardHolderName = cleanedCandidate;
+          if (hadPrefix) break;
+        }
+      }
+    }
+
+    // 6. Calculate Document Confidence Score
     final docScore = _calculateDocumentScore(
       normalizedText,
       foundCardNumber: foundCardNumber,
@@ -249,12 +327,12 @@ class CardParser {
     final isDocConfidenceLow = docScore < 3;
 
     if (foundCardNumber == null && foundExpiryDate == null) {
-      return const Failure('Invalid Card');
+      return const Failure('Could not find any card details. Please ensure the card is well-lit and clearly visible.');
     }
 
     var isLuhnValid = false;
     var isStandardLength = false;
-    String warningMessage;
+    String? warningMessage;
 
     if (foundCardNumber != null) {
       final len = foundCardNumber.length;
@@ -279,22 +357,21 @@ class CardParser {
         suffix = '';
       }
 
-      warningMessage = 'Invalid Card.';
-
-      if(suffix.isNotEmpty) {
-        warningMessage+=suffix;
+      warningMessage = 'Low confidence scan.$suffix';
+    } else if (foundCardNumber == null || !isLuhnValid || foundExpiryDate == null) {
+      if (foundCardNumber == null) {
+        warningMessage = 'Card number not found.';
+      } else if (!isLuhnValid) {
+        warningMessage = 'Invalid card number checksum.';
+      } else {
+        warningMessage = 'Expiry date not found.';
       }
-
-    } else {
-      warningMessage = 'Invalid Card.';
-
     }
-
-
 
     final details = CardDetails(
       cardNumber: foundCardNumber ?? '',
       expiryDate: foundExpiryDate ?? '',
+      cardHolderName: foundCardHolderName ?? '',
       isLuhnValid: isLuhnValid,
       warning: warningMessage,
     );
@@ -302,5 +379,7 @@ class CardParser {
     if (warningMessage != null) {
       return PartialSuccess(details, warningMessage);
     }
+    
+    return Success(details);
   }
 }

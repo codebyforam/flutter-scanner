@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_ocr/core/errors/result.dart';
+import 'package:flutter_ocr/core/logger/app_logger.dart';
 import 'package:flutter_ocr/core/services/image_service.dart';
 import 'package:flutter_ocr/core/services/ocr_service.dart';
 import 'package:flutter_ocr/core/utils/text_cleaner.dart';
@@ -64,6 +65,7 @@ class CardScannerCubit extends Cubit<CardScannerState> {
   void _processOcrResult(Result<String> ocrResult) {
     switch (ocrResult) {
       case Success(:final data):
+        AppLogger.d('Raw OCR Text:\n$data');
         final normalizedText = TextCleaner.clean(data);
         final currentHash = normalizedText.hashCode;
         final isDuplicate = _lastScanHash == currentHash;
