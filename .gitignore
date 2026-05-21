@@ -1,0 +1,60 @@
+# Flutter/Dart related
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+
+# Android related
+android/**/generated/
+android/app/debug/
+android/app/profile/
+android/app/release/
+android/.gradle/
+android/local.properties
+android/key.properties
+*.jks
+*.keystore
+*.google-services.json
+
+# iOS related
+ios/Flutter/Generated.xcconfig
+ios/Flutter/flutter_export_environment.sh
+ios/Flutter/App.framework
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/DerivedData/
+*.moved-aside
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+**/.LSOverride
+**/DerivedData
+**/Pods
+**/Build
+**/.xcworkspace
+
+# macOS related
+macos/Flutter/Generated.xcconfig
+macos/Flutter/flutter_export_environment.sh
+macos/Flutter/ephemeral/
+macos/Pods/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# Visual Studio Code related
+.vscode/
+
+# Project specific
+.env*
+assets/screenshots/*.png
+!assets/screenshots/.gitkeep
+test_report/
+*.log
+.history/
