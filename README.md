@@ -46,15 +46,6 @@ lib/
 
 ---
 
-## 📊 Technical Audit Reports
-For deep technical insights into the implementation, review the following audit logs:
-- [Architecture Audit](./REPORT_ARCHITECTURE_AUDIT.md)
-- [Parsing Heuristics](./REPORT_PARSING_ENGINE.md)
-- [UX & Edge Case Handling](./REPORT_UX_AND_EDGE_CASES.md)
-- [Production Readiness](./REPORT_PRODUCTION_ROADMAP.md)
-
----
-
 ## 🛠 Getting Started
 
 1. **Clone the repository**
@@ -77,12 +68,7 @@ For deep technical insights into the implementation, review the following audit 
    flutter run
    ```
 
----
 
-## 📸 Screenshots
-*(Add screenshots of your application here to showcase the UI)*
-
----
 
 ## 👤 Author
 **codeByForam**
