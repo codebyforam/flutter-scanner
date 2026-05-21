@@ -29,90 +29,111 @@ class HomePage extends StatelessWidget {
           ),
         ),
         child: SafeArea(
-          child: CustomScrollView(
-            slivers: [
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(24, 32, 24, 20),
-                sliver: SliverToBoxAdapter(
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                _getGreeting(),
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              Text(
-                                'Flutter Scanner',
-                                style: theme.textTheme.headlineMedium,
-                              ),
-                            ],
-                          ),
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                              border: Border.all(color: const Color(0xFFF1F5F9)),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.03),
-                                  blurRadius: 10,
-                                ),
-                              ],
-                            ),
-                            child: Icon(Icons.person_outline_rounded, color: theme.colorScheme.primary),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 48),
-                      Text(
-                        'SELECT SCAN MODE',
-                        textAlign: TextAlign.center,
-                        style: theme.textTheme.labelLarge?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                          letterSpacing: 2.0,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      _PremiumFeatureCard(
-                        title: 'Card Scanner',
-                        subtitle: 'Extract details from bank cards instantly',
-                        icon: Icons.credit_card_rounded,
-                        color: theme.colorScheme.primary,
-                        onTap: () => context.push('/card-scanner'),
-                      ),
-                      const SizedBox(height: 20),
-                      _PremiumFeatureCard(
-                        title: 'Passbook Scanner',
-                        subtitle: 'Digitize bank passbooks and statements',
-                        icon: Icons.account_balance_wallet_rounded,
-                        color: theme.colorScheme.secondary,
-                        onTap: () => context.push('/passbook-scanner'),
-                      ),
-                    ],
+          child: Stack(
+            children: [
+              // Decorative background elements
+              Positioned(
+                top: -50,
+                right: -50,
+                child: Container(
+                  width: 200,
+                  height: 200,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.03),
+                    shape: BoxShape.circle,
                   ),
                 ),
               ),
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 24, left: 24, right: 24),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      _SecurityBadge(theme: theme),
-                    ],
-                  ),
+              Positioned(
+                bottom: 100,
+                left: -30,
+                child: Icon(
+                  Icons.credit_card_rounded,
+                  size: 150,
+                  color: theme.colorScheme.primary.withValues(alpha: 0.02),
                 ),
+              ),
+              Positioned(
+                top: 200,
+                left: 100,
+                child: Icon(
+                  Icons.account_balance_rounded,
+                  size: 100,
+                  color: theme.colorScheme.secondary.withValues(alpha: 0.02),
+                ),
+              ),
+              CustomScrollView(
+                slivers: [
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    _getGreeting(),
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Flutter Scanner',
+                                    style: theme.textTheme.headlineMedium,
+                                  ),
+                                ],
+                              ),
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: const Color(0xFFF1F5F9)),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.03),
+                                      blurRadius: 10,
+                                    ),
+                                  ],
+                                ),
+                                child: Icon(Icons.person_outline_rounded, color: theme.colorScheme.primary),
+                              ),
+                            ],
+                          ),
+                          Expanded(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                _PremiumFeatureCard(
+                                  title: 'Card Scanner',
+                                  subtitle: 'Extract details from bank cards instantly',
+                                  icon: Icons.credit_card_rounded,
+                                  color: theme.colorScheme.primary,
+                                  onTap: () => context.push('/card-scanner'),
+                                ),
+                                const SizedBox(height: 20),
+                                _PremiumFeatureCard(
+                                  title: 'Passbook Scanner',
+                                  subtitle: 'Digitize bank passbooks and statements',
+                                  icon: Icons.account_balance_wallet_rounded,
+                                  color: theme.colorScheme.secondary,
+                                  onTap: () => context.push('/passbook-scanner'),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          _SecurityBadge(theme: theme),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
