@@ -64,13 +64,6 @@ class _ResultTileState extends State<ResultTile> {
     }
   }
 
-  String _getMaskedValue(String value) {
-    if (value.length <= 4) return value;
-    final lastFour = value.substring(value.length - 4);
-    final prefix = value.substring(0, value.length - 4);
-    final masked = prefix.replaceAll(RegExp(r'\d'), 'X');
-    return masked + lastFour;
-  }
 
   @override
   void dispose() {
@@ -95,7 +88,7 @@ class _ResultTileState extends State<ResultTile> {
 
     final isError = status == ValidationStatus.invalid;
     final isWarning = status == ValidationStatus.warning;
-    final isValid = status == ValidationStatus.valid;
+    final _ = status == ValidationStatus.valid;
 
     final statusColor = isError 
         ? theme.colorScheme.error 
@@ -214,8 +207,8 @@ class _StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    String text = 'VALID';
-    IconData icon = Icons.check_circle_rounded;
+    var text = 'VALID';
+    var icon = Icons.check_circle_rounded;
     
     if (status == ValidationStatus.invalid) {
       text = 'INVALID';
@@ -250,4 +243,3 @@ class _StatusBadge extends StatelessWidget {
     );
   }
 }
-

@@ -21,7 +21,7 @@ class AppTheme {
       textTheme: const TextTheme(
         headlineMedium: TextStyle(
           fontWeight: FontWeight.w800,
-          letterSpacing: -1.0,
+          letterSpacing: -1,
           color: Color(0xFF0F172A),
         ),
         titleLarge: TextStyle(
@@ -62,8 +62,8 @@ class AppTheme {
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(
-            color: const Color(0xFFE2E8F0),
+          borderSide: const BorderSide(
+            color: Color(0xFFE2E8F0),
             width: 1,
           ),
         ),
@@ -151,7 +151,7 @@ class AppTheme {
       textTheme: const TextTheme(
         headlineMedium: TextStyle(
           fontWeight: FontWeight.w800,
-          letterSpacing: -1.0,
+          letterSpacing: -1,
           color: Colors.white,
         ),
         titleLarge: TextStyle(

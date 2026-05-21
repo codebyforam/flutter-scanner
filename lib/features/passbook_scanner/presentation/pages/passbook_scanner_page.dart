@@ -22,7 +22,7 @@ class PassbookScannerPage extends StatelessWidget {
     
     final isError = state is PassbookScannerFailure;
     final isDone = state is PassbookScannerSuccess || state is PassbookScannerPartialSuccess;
-    final isLoading = state is PassbookScannerLoading;
+    final _ = state is PassbookScannerLoading;
 
     return [
       const ScanStep(label: 'Image', status: ScanStepStatus.completed),
@@ -117,7 +117,7 @@ class PassbookScannerPage extends StatelessWidget {
         builder: (context, state) {
           final isLoading = state is PassbookScannerLoading;
 
-          return Container(
+          return ColoredBox(
             color: theme.colorScheme.surface,
             child: SingleChildScrollView(
               child: Column(
@@ -167,8 +167,7 @@ class PassbookScannerPage extends StatelessWidget {
   }
 
   Widget _buildBottomActions(BuildContext context, PassbookScannerCubit cubit) {
-    final theme = Theme.of(context);
-    
+
     return BlocBuilder<PassbookScannerCubit, PassbookScannerState>(
       builder: (context, state) {
         if (state is PassbookScannerLoading) return const SizedBox.shrink();
@@ -291,11 +290,11 @@ class PassbookScannerPage extends StatelessWidget {
 
     if (state is PassbookScannerSuccess || state is PassbookScannerPartialSuccess) {
       final data = state is PassbookScannerSuccess 
-          ? (state as PassbookScannerSuccess).data 
+          ? state.data
           : (state as PassbookScannerPartialSuccess).data;
       final isPartial = state is PassbookScannerPartialSuccess;
       final isDuplicate = state is PassbookScannerSuccess 
-          ? (state as PassbookScannerSuccess).isDuplicate 
+          ? state.isDuplicate
           : (state as PassbookScannerPartialSuccess).isDuplicate;
       
       return SingleChildScrollView(
@@ -369,15 +368,15 @@ class _ConfidenceBadge extends StatelessWidget {
         color: const Color(0xFF10B981).withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Row(
+      child: const Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.verified_rounded, size: 14, color: const Color(0xFF10B981)),
-          const SizedBox(width: 6),
+          Icon(Icons.verified_rounded, size: 14, color: Color(0xFF10B981)),
+          SizedBox(width: 6),
           Text(
             'HIGH CONFIDENCE',
             style: TextStyle(
-              color: const Color(0xFF10B981),
+              color: Color(0xFF10B981),
               fontSize: 10,
               fontWeight: FontWeight.w900,
               letterSpacing: 0.5,

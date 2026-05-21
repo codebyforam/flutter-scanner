@@ -254,4 +254,3 @@ class _SecurityBadge extends StatelessWidget {
     );
   }
 }
-

@@ -23,7 +23,6 @@ class CardScannerPage extends StatelessWidget {
     
     final isError = state is CardScannerFailure;
     final isDone = state is CardScannerSuccess || state is CardScannerPartialSuccess;
-    final isLoading = state is CardScannerLoading;
 
     return [
       const ScanStep(label: 'Image', status: ScanStepStatus.completed),
@@ -147,7 +146,7 @@ class CardScannerPage extends StatelessWidget {
         builder: (context, state) {
           final isLoading = state is CardScannerLoading;
 
-          return Container(
+          return ColoredBox(
             color: theme.colorScheme.surface,
             child: SingleChildScrollView(
               child: Column(
@@ -197,7 +196,6 @@ class CardScannerPage extends StatelessWidget {
   }
 
   Widget _buildBottomActions(BuildContext context, CardScannerCubit cubit) {
-    final theme = Theme.of(context);
     
     return BlocBuilder<CardScannerCubit, CardScannerState>(
       builder: (context, state) {
@@ -321,11 +319,11 @@ class CardScannerPage extends StatelessWidget {
 
     if (state is CardScannerSuccess || state is CardScannerPartialSuccess) {
       final data = state is CardScannerSuccess 
-          ? (state as CardScannerSuccess).data 
+          ? state.data
           : (state as CardScannerPartialSuccess).data;
       final isPartial = state is CardScannerPartialSuccess;
       final isDuplicate = state is CardScannerSuccess 
-          ? (state as CardScannerSuccess).isDuplicate 
+          ? state.isDuplicate
           : (state as CardScannerPartialSuccess).isDuplicate;
       
       return SingleChildScrollView(
@@ -400,15 +398,15 @@ class _ConfidenceBadge extends StatelessWidget {
         color: const Color(0xFF10B981).withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Row(
+      child: const Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.verified_rounded, size: 14, color: const Color(0xFF10B981)),
-          const SizedBox(width: 6),
+          Icon(Icons.verified_rounded, size: 14, color: Color(0xFF10B981)),
+          SizedBox(width: 6),
           Text(
             'HIGH CONFIDENCE',
             style: TextStyle(
-              color: const Color(0xFF10B981),
+              color: Color(0xFF10B981),
               fontSize: 10,
               fontWeight: FontWeight.w900,
               letterSpacing: 0.5,

@@ -241,13 +241,6 @@ class CardParser {
 
     // 5. Try to find card holder name
     String? foundCardHolderName;
-    final cardHolderKeywords = [
-      'VISA', 'MASTERCARD', 'MASTER CARD', 'RUPAY', 'DEBIT', 'CREDIT', 
-      'VALID', 'THRU', 'EXP', 'EXPIRY', 'EXPIRES', 'MONTH', 'YEAR',
-      'BANK', 'INTERNATIONAL', 'PLATINUM', 'GOLD', 'CLASSIC', 'CARDHOLDER',
-      'CARD HOLDER', 'AUTHORIZED', 'SIGNATURE', 'MEMBER', 'AMERICAN EXPRESS', 'AMEX',
-      'DISCOVER', 'DINERS CLUB', 'JCB', 'MAESTRO', 'ELECTRON', 'WORLD', 'BUSINESS'
-    ];
 
     for (final line in lines) {
       var candidate = line.trim();
@@ -257,7 +250,7 @@ class CardParser {
 
       // Check for common labels and strip them
       final prefixes = ['CARD HOLDER', 'NAME', 'CARDHOLDER', 'NAME OF HOLDER'];
-      bool hadPrefix = false;
+      var hadPrefix = false;
       for (final p in prefixes) {
         if (upperCandidate.startsWith(p)) {
           candidate = candidate.substring(p.length).replaceFirst(RegExp(r'^[:\-\s]+'), '').trim();
@@ -271,7 +264,7 @@ class CardParser {
       // Look for lines with 2-5 words
       final words = candidate.split(RegExp(r'\s+'));
       if (words.length >= 2 && words.length <= 5) {
-        var cleanedCandidate = candidate.toUpperCase()
+        final cleanedCandidate = candidate.toUpperCase()
             .replaceAll('1', 'I')
             .replaceAll('0', 'O')
             .replaceAll('5', 'S')
@@ -279,7 +272,7 @@ class CardParser {
             .replaceAll('2', 'Z');
 
         if (RegExp(r'^[A-Z\s.-]+$').hasMatch(cleanedCandidate)) {
-          bool isForbidden = false;
+          var isForbidden = false;
           final forbiddenKeywords = [
             'DEBIT', 'CREDIT', 'CARD', 'INTERNATIONAL', 'PLATINUM', 
             'GOLD', 'CLASSIC', 'BANK', 'VALID', 'THRU', 'UPTO', 'FROM',

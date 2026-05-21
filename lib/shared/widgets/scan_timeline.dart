@@ -193,7 +193,7 @@ class _AnimatedStepCircle extends StatelessWidget {
       case ScanStepStatus.active:
         return Padding(
           key: const ValueKey('spinner'),
-          padding: const EdgeInsets.all(6.0),
+          padding: const EdgeInsets.all(6),
           child: CircularProgressIndicator(
             strokeWidth: 2.5,
             valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
