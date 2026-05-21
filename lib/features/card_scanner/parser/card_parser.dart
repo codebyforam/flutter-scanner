@@ -254,7 +254,7 @@ class CardParser {
 
     var isLuhnValid = false;
     var isStandardLength = false;
-    String? warningMessage;
+    String warningMessage;
 
     if (foundCardNumber != null) {
       final len = foundCardNumber.length;
@@ -278,10 +278,19 @@ class CardParser {
       } else {
         suffix = '';
       }
-      warningMessage = 'Invalid Card';
+
+      warningMessage = 'Invalid Card.';
+
+      if(suffix.isNotEmpty) {
+        warningMessage+=suffix;
+      }
+
     } else {
-      warningMessage = 'Invalid Card';
+      warningMessage = 'Invalid Card.';
+
     }
+
+
 
     final details = CardDetails(
       cardNumber: foundCardNumber ?? '',
@@ -293,7 +302,5 @@ class CardParser {
     if (warningMessage != null) {
       return PartialSuccess(details, warningMessage);
     }
-
-    return Success(details);
   }
 }
